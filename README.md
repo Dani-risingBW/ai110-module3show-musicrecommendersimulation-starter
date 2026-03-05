@@ -137,13 +137,13 @@ $$
 - Energy closeness:
 
 $$
-	ext{energy\_score} = \max\left(0,\, 1 - |\text{song.energy} - \text{user.target\_energy}|\right)
+	ext{energy\_score} = \max\left(0,\, 1 - |\text{song.energy} - \text{user.target_energy}|\right)
 $$
 
 - Tempo closeness (if target tempo exists):
 
 $$
-	ext{tempo\_score} = \max\left(0,\, 1 - \frac{|\text{song.tempo} - \text{user.target\_tempo}|}{\text{tempo\_range}}\right)
+	ext{tempo_score} = \max\left(0,\, 1 - \frac{|\text{song.tempo} - \text{user.target_tempo}|}{\text{tempo_range}}\right)
 $$
 
 where:
