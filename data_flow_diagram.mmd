@@ -1,0 +1,15 @@
+flowchart TD
+    A[Input: User Preferences + K] --> B[Load songs from CSV]
+    B --> C[For each song in catalog]
+    C --> D[Compute genre/mood match]
+    D --> E[Compute energy closeness]
+    E --> F{Tempo preference provided?}
+    F -- Yes --> G[Compute tempo closeness]
+    F -- No --> H[Skip tempo component]
+    G --> I[Compute weighted final score]
+    H --> I
+    I --> J[Store song + score]
+    J --> K{More songs?}
+    K -- Yes --> C
+    K -- No --> L[Sort by score descending]
+    L --> M[Output: Top K recommendations]

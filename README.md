@@ -23,11 +23,150 @@ Some prompts to answer:
 
 - What features does each `Song` use in your system
   - For example: genre, mood, energy, tempo
+  - My system uses `mood`, `energy`, and `tempo_bpm` to match songs to a user's preference.
 - What information does your `UserProfile` store
+  - My `UserProfile` stores preferred mood, target energy (0 to 1), and target tempo in BPM, which are used to score songs by closeness and mood match.
 - How does your `Recommender` compute a score for each song
+  - It computes a weighted score from mood match, energy closeness, and tempo closeness, then ranks songs from highest to lowest score.
+  - Explained below
 - How do you choose which songs to recommend
+  - Explained below
 
 You can include a simple diagram or bullet list if helpful.
+
+---
+
+## Example Taste Profiles
+
+Use these as concrete user profiles your recommender can compare songs against.
+
+- **Focus profile**
+  - `mood = focused`
+  - `energy = 0.40`
+  - `tempo_bpm = 80`
+  - Description: Calm, steady tracks for concentration.
+
+- **Workout profile**
+  - `mood = intense`
+  - `energy = 0.90`
+  - `tempo_bpm = 140`
+  - Description: Fast, high-energy songs for training.
+
+- **Chill profile**
+  - `mood = chill`
+  - `energy = 0.30`
+  - `tempo_bpm = 70`
+  - Description: Low-energy, slower songs for relaxing.
+
+In Python dictionary form:
+
+```python
+focus_profile = {"mood": "focused", "energy": 0.40, "tempo_bpm": 80}
+workout_profile = {"mood": "intense", "energy": 0.90, "tempo_bpm": 140}
+chill_profile = {"mood": "chill", "energy": 0.30, "tempo_bpm": 70}
+```
+
+---
+
+## Distance-to-Preference Score (Numerical Features)
+
+Use this score when you want to reward songs that are **closer** to a user's target value (instead of just higher or lower).
+
+For a numerical feature like `energy`:
+
+$$
+s_f(u, i) = 1 - \frac{|x_{i,f} - p_{u,f}|}{x_{f,\max} - x_{f,\min}}
+$$
+
+Where:
+
+- $s_f(u, i)$ = similarity score for feature $f$ between user $u$ and song $i$
+- $x_{i,f}$ = song value for feature $f$ (for example, song energy)
+- $p_{u,f}$ = user preferred value for feature $f$
+- $x_{f,\min}, x_{f,\max}$ = min and max values for feature $f$ in your dataset
+
+Interpretation:
+
+- Exact match ($x_{i,f} = p_{u,f}$) gives score $1.0$
+- Larger distance from preference lowers the score toward $0.0$
+- The score is symmetric: being above or below preference is penalized equally
+
+Example with `energy` in range $[0,1]$:
+
+- User preference: $p = 0.80$
+- Song A: $x = 0.75 \Rightarrow s = 1 - |0.75 - 0.80| = 0.95$
+- Song B: $x = 0.40 \Rightarrow s = 1 - |0.40 - 0.80| = 0.60$
+
+So Song A is a better match on `energy` because it is closer to the user's preference.
+
+---
+
+## Scoring Recipe (Used in This Code)
+
+My recommender computes a weighted score between 0 and 1 for each song, then sorts songs from highest to lowest score.
+
+### Feature Weights
+
+- Genre match: 0.25
+- Mood match: 0.25
+- Energy closeness: 0.30
+- Tempo closeness: 0.20 (only used if the user provides `tempo_bpm`)
+
+### Per-Feature Scores
+
+- Genre score:
+
+$$
+	ext{genre\_score} =
+\begin{cases}
+1, & \text{if song.genre = user.genre} \\
+0, & \text{otherwise}
+\end{cases}
+$$
+
+- Mood score:
+
+$$
+	ext{mood\_score} =
+\begin{cases}
+1, & \text{if song.mood = user.mood} \\
+0, & \text{otherwise}
+\end{cases}
+$$
+
+- Energy closeness:
+
+$$
+	ext{energy\_score} = \max\left(0,\, 1 - |\text{song.energy} - \text{user.target\_energy}|\right)
+$$
+
+- Tempo closeness (if target tempo exists):
+
+$$
+	ext{tempo\_score} = \max\left(0,\, 1 - \frac{|\text{song.tempo} - \text{user.target\_tempo}|}{\text{tempo\_range}}\right)
+$$
+
+where:
+
+$$
+	ext{tempo\_range} = \max(\text{all song tempos}) - \min(\text{all song tempos})
+$$
+
+### Final Song Score
+
+If all 4 features are present:
+
+$$
+	ext{score} = \frac{0.25\cdot\text{genre\_score} + 0.25\cdot\text{mood\_score} + 0.30\cdot\text{energy\_score} + 0.20\cdot\text{tempo\_score}}{1.00}
+$$
+
+If tempo is not provided, the recommender excludes tempo and re-normalizes by the sum of the used weights:
+
+$$
+	ext{score} = \frac{\sum (w_i \cdot s_i)}{\sum w_i\text{ used}}
+$$
+
+Then it recommends the top $k$ songs with the highest score.
 
 ---
 
@@ -85,6 +224,8 @@ Examples:
 - It only works on a tiny catalog
 - It does not understand lyrics or language
 - It might over favor one genre or mood
+
+Expected bias note: this recommender is likely to favor songs from already common genres/moods in the CSV and songs near the chosen energy/tempo targets, which can under-recommend niche styles or tracks that are good fits in ways not captured by these features.
 
 You will go deeper on this in your model card.
 
