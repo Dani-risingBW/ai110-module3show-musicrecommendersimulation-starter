@@ -80,7 +80,7 @@ Prompts:
 
 - Valence, danceability, and acousticness are currently unused. The scoring can also introduce energy-gap bias, and the combined genre+mood exact-match weight (50%) can dominate results; this effect becomes stronger when `tempo_bpm` is missing. 
 
-Because genre and mood are exact-match checks with large combined weight, users whose tastes do not fit those labels exactly can be pushed down in rankings even when other signals are close. The energy-gap formula also assumes each user has one ideal energy point, which can misrepresent people with broader or context-dependent taste (for example, liking both very calm and very high-energy songs). This can create a filter-bubble effect where similar songs keep repeating while less obvious but still relevant songs are rarely surfaced.
+- Because genre and mood are exact-match checks with large combined weight, users whose tastes do not fit those labels exactly can be pushed down in rankings even when other signals are close. The energy-gap formula also assumes each user has one ideal energy point, which can misrepresent people with broader or context-dependent taste (for example, liking both very calm and very high-energy songs). This can create a filter-bubble effect where similar songs keep repeating while less obvious but still relevant songs are rarely surfaced.
 ---
 
 ## 7. Evaluation  

@@ -9,10 +9,17 @@ You will implement the functions in recommender.py:
 - recommend_songs
 """
 
+from importlib import import_module
+
 try:
     from .recommender import load_songs, recommend_songs
 except ImportError:
     from recommender import load_songs, recommend_songs
+
+try:
+    tabulate = import_module("tabulate").tabulate
+except ModuleNotFoundError:
+    tabulate = None
 
 
 def _print_recommendation_table(recommendations) -> None:
@@ -28,13 +35,9 @@ def _print_recommendation_table(recommendations) -> None:
             explanation,
         ])
 
-    try:
-        from tabulate import tabulate
-
+    if tabulate is not None:
         print(tabulate(rows, headers=headers, tablefmt="github"))
         return
-    except ImportError:
-        pass
 
     all_rows = [headers] + rows
     widths = [max(len(str(row[col])) for row in all_rows) for col in range(len(headers))]
