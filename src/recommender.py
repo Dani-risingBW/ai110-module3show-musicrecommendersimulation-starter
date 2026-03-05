@@ -2,6 +2,13 @@ from typing import List, Dict, Tuple, Optional
 from dataclasses import dataclass
 import csv
 
+
+def _normalize_label(value: object) -> str:
+    """Normalize text labels for reliable categorical matching."""
+    if value is None:
+        return ""
+    return str(value).strip().lower()
+
 @dataclass
 class Song:
     """
@@ -71,10 +78,18 @@ class Recommender:
 
         components: List[Tuple[float, float]] = []
 
-        genre_score = 1.0 if song.genre == user.favorite_genre else 0.0
+        genre_score = (
+            1.0
+            if _normalize_label(song.genre) == _normalize_label(user.favorite_genre)
+            else 0.0
+        )
         components.append((genre_score, weights["genre"]))
 
-        mood_score = 1.0 if song.mood == user.favorite_mood else 0.0
+        mood_score = (
+            1.0
+            if _normalize_label(song.mood) == _normalize_label(user.favorite_mood)
+            else 0.0
+        )
         components.append((mood_score, weights["mood"]))
 
         energy_score = self._energy_closeness(song.energy, user.target_energy)
@@ -107,9 +122,9 @@ class Recommender:
         """Generate human-readable explanation for why a song was recommended."""
         reasons: List[str] = []
 
-        if song.genre == user.favorite_genre:
+        if _normalize_label(song.genre) == _normalize_label(user.favorite_genre):
             reasons.append("genre matches")
-        if song.mood == user.favorite_mood:
+        if _normalize_label(song.mood) == _normalize_label(user.favorite_mood):
             reasons.append("mood matches")
 
         energy_gap = abs(song.energy - user.target_energy)
@@ -168,11 +183,19 @@ def _score_song_dict(user_prefs: Dict, song: Dict, tempo_range: float) -> float:
     components: List[Tuple[float, float]] = []
 
     if "genre" in user_prefs:
-        genre_score = 1.0 if song["genre"] == user_prefs["genre"] else 0.0
+        genre_score = (
+            1.0
+            if _normalize_label(song["genre"]) == _normalize_label(user_prefs["genre"])
+            else 0.0
+        )
         components.append((genre_score, weights["genre"]))
 
     if "mood" in user_prefs:
-        mood_score = 1.0 if song["mood"] == user_prefs["mood"] else 0.0
+        mood_score = (
+            1.0
+            if _normalize_label(song["mood"]) == _normalize_label(user_prefs["mood"])
+            else 0.0
+        )
         components.append((mood_score, weights["mood"]))
 
     if "energy" in user_prefs:
@@ -195,9 +218,9 @@ def _score_song_dict(user_prefs: Dict, song: Dict, tempo_range: float) -> float:
 def _build_explanation(user_prefs: Dict, song: Dict) -> str:
     """Build human-readable explanation string for a recommendation."""
     reasons: List[str] = []
-    if user_prefs.get("genre") == song["genre"]:
+    if _normalize_label(user_prefs.get("genre")) == _normalize_label(song["genre"]):
         reasons.append("genre matches")
-    if user_prefs.get("mood") == song["mood"]:
+    if _normalize_label(user_prefs.get("mood")) == _normalize_label(song["mood"]):
         reasons.append("mood matches")
     if "energy" in user_prefs:
         reasons.append(f"energy close (Δ={abs(song['energy'] - user_prefs['energy']):.2f})")

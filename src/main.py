@@ -15,22 +15,64 @@ except ImportError:
     from recommender import load_songs, recommend_songs
 
 
+def _print_recommendation_table(recommendations) -> None:
+    headers = ["Rank", "Title", "Artist", "Score", "Reason"]
+    rows = []
+    for index, rec in enumerate(recommendations, start=1):
+        song, score, explanation = rec
+        rows.append([
+            index,
+            song["title"],
+            song["artist"],
+            f"{score:.2f}",
+            explanation,
+        ])
+
+    try:
+        from tabulate import tabulate
+
+        print(tabulate(rows, headers=headers, tablefmt="github"))
+        return
+    except ImportError:
+        pass
+
+    all_rows = [headers] + rows
+    widths = [max(len(str(row[col])) for row in all_rows) for col in range(len(headers))]
+
+    def format_row(row_values):
+        cells = [str(value).ljust(widths[idx]) for idx, value in enumerate(row_values)]
+        return "| " + " | ".join(cells) + " |"
+
+    divider = "+-" + "-+-".join("-" * width for width in widths) + "-+"
+
+    print(divider)
+    print(format_row(headers))
+    print(divider)
+    for row in rows:
+        print(format_row(row))
+    print(divider)
+
+
 def main() -> None:
     songs = load_songs("data/songs.csv") 
 
-    # Starter example profile
-    user_prefs = {"genre": "pop", "mood": "happy", "energy": 0.8, "tempo_bpm": 120}
+    focus_profile = {"genre": "lofi", "mood": "focused", "energy": 0.4, "tempo_bpm": 80}
+    workout_profile = {"genre": "hiphop", "mood": "intense", "energy": 0.9, "tempo_bpm": 140}
+    chill_profile = {"genre": "acoustic", "mood": "chill", "energy": 0.3, "tempo_bpm": 70}
+
+    # Pick one profile to run recommendations for
+    user_profile_name = "focus"
+    user_prefs = focus_profile
 
     recommendations = recommend_songs(user_prefs, songs, k=5)
 
+    print("\nUser profile:")
+    print(f"Name: {user_profile_name}")
+    for key, value in user_prefs.items():
+        print(f"- {key}: {value}")
+
     print("\nTop recommendations:\n")
-    for rec in recommendations:
-        # You decide the structure of each returned item.
-        # A common pattern is: (song, score, explanation)
-        song, score, explanation = rec
-        print(f"{song['title']} - Score: {score:.2f}")
-        print(f"Because: {explanation}")
-        print()
+    _print_recommendation_table(recommendations)
 
 
 if __name__ == "__main__":
